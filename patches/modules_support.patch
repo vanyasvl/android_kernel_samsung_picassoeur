@@ -1,0 +1,32 @@
+--- kernel_orig/arch/arm/mm/proc-syms.c	2014-04-09 12:10:04.846114000 +1100
++++ kernel/arch/arm/mm/proc-syms.c	2014-04-09 11:54:33.894114000 +1100
+@@ -18,7 +18,6 @@
+ #ifndef MULTI_CPU
+ EXPORT_SYMBOL(cpu_dcache_clean_area);
+ EXPORT_SYMBOL(cpu_set_pte_ext);
+-EXPORT_SYMBOL(cpu_tima_set_pte_ext);
+ #else
+ EXPORT_SYMBOL(processor);
+ #endif
+--- kernel_orig/arch/arm/mach-msm/sec-switch.c	2014-01-23 15:34:20.000000000 +1100
++++ kernel/arch/arm/mach-msm/sec-switch.c	2014-04-09 11:29:26.322114000 +1100
+@@ -2565,7 +2565,7 @@
+ 		pr_info("%s: Ignore Cable setting, Not LPM mode\n", __func__);
+ 	}
+ }
+-EXPORT_SYMBOL(fsa9485_set_mhl_cable)
++EXPORT_SYMBOL(fsa9485_set_mhl_cable);
+ 
+ boon fsa9485_muic_is_mhl_attached(void)
+ {
+--- kernel_orig/Makefile	2014-01-23 15:34:19.000000000 +1100
++++ kernel/Makefile	2014-04-09 20:55:48.278114000 +1100
+@@ -351,7 +351,7 @@
+ 
+ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
+ 		  -Wbitwise -Wno-return-void $(CF)
+-CFLAGS_MODULE   =
++CFLAGS_MODULE   = -fno-pic
+ AFLAGS_MODULE   =
+ LDFLAGS_MODULE  =
+ CFLAGS_KERNEL	=
