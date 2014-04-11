@@ -2565,7 +2565,7 @@ void fsa9485_set_mhl_cable(bool attached) {
 		pr_info("%s: Ignore Cable setting, Not LPM mode\n", __func__);
 	}
 }
-EXPORT_SYMBOL(fsa9485_set_mhl_cable)
+EXPORT_SYMBOL(fsa9485_set_mhl_cable);
 
 bool fsa9485_muic_is_mhl_attached(void)
 {
