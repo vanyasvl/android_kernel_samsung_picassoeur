@@ -1,0 +1,56 @@
+--- kernel_orig/fs/namespace.c	2014-01-23 15:34:18.000000000 +1100
++++ kernel/fs/namespace.c	2014-04-11 15:18:22.258114000 +1100
+@@ -2141,6 +2141,21 @@
+ 	if (data_page)
+ 		((char *)data_page)[PAGE_SIZE - 1] = 0;
+ 
++#ifdef CONFIG_RESTRICT_ROOTFS_SLAVE
++	/* Check if this is an attempt to mark "/" as recursive-slave. */
++	if (strcmp(dir_name, "/") == 0 && flags == (MS_SLAVE | MS_REC)) {
++		static const char storage[] = "/storage";
++		long res;
++		/* Mark /storage as recursive-slave instead. */
++		if ((res = do_mount(NULL, (char *)storage, NULL, (MS_SLAVE | MS_REC), NULL)) == 0) {
++			return 0;	
++		} else {
++			pr_warn("Failed to mount %s as MS_SLAVE: %ld\n", storage, res);
++		}
++		/* Fallback: Mark rootfs as recursive-slave as requested. */
++	}
++#endif
++
+ 	/* ... and get the mountpoint */
+ 	retval = kern_path(dir_name, LOOKUP_FOLLOW, &path);
+ 	if (retval)
+--- kernel_orig/fs/Kconfig	2014-01-23 15:34:17.000000000 +1100
++++ kernel/fs/Kconfig	2014-04-10 19:29:30.990114000 +1100
+@@ -292,4 +292,29 @@
+ source "fs/nls/Kconfig"
+ source "fs/dlm/Kconfig"
+ 
++config RESTRICT_ROOTFS_SLAVE
++ 	bool "Android: Restrict rootfs slave mountspace to /storage"
++ 	help
++ 	  Restrict slave mountspace so Dalvik apps can mount system-wide volumes
++ 
++ 	  Android 4.2 implements multi-user storage using per-process mount
++ 	  namespaces.  Everything under "/" (the entire filesystem hierarchy) is
++ 	  marked as a recursive-slave mountspace for all zygote instances.  This is
++ 	  done so that user-storage sandbox mounts under /storage/emulated are hidden
++ 	  from other apps and users.  Unfortunately this means that any Dalvik app
++ 	  (actually, any program whose clone/fork ancestry includes a Dalvik zygote,
++ 	  which is everything except services spawned directly from init) cannot
++ 	  mount system-wide volumes.
++ 
++ 	  This option restricts rootfs-slave calls to /storage (and
++ 	  /mnt/shell/emulated) so that Dalvik apps can mount system-wide volumes
++ 	  elsewhere (with appropriate permission, as in earlier versions of Android),
++ 	  while retaining full multi-user storage compatibility.  It is made
++ 	  available as a kernel-based workaround for instances where libdvm can not
++ 	  be modified.
++ 
++ 	  This option requires that a tmpfs volume is mounted as /storage in
++ 	  Android init.rc.  If this volume is unavailable, then we fall back to the
++ 	  previous behavior of marking the entire filesystem hierarchy as slave.
++
+ endmenu

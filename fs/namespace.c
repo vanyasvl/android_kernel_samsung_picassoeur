@@ -2141,6 +2141,21 @@ long do_mount(char *dev_name, char *dir_name, char *type_page,
 	if (data_page)
 		((char *)data_page)[PAGE_SIZE - 1] = 0;
 
+#ifdef CONFIG_RESTRICT_ROOTFS_SLAVE
+	/* Check if this is an attempt to mark "/" as recursive-slave. */
+	if (strcmp(dir_name, "/") == 0 && flags == (MS_SLAVE | MS_REC)) {
+		static const char storage[] = "/storage";
+		long res;
+		/* Mark /storage as recursive-slave instead. */
+		if ((res = do_mount(NULL, (char *)storage, NULL, (MS_SLAVE | MS_REC), NULL)) == 0) {
+			return 0;	
+		} else {
+			pr_warn("Failed to mount %s as MS_SLAVE: %ld\n", storage, res);
+		}
+		/* Fallback: Mark rootfs as recursive-slave as requested. */
+	}
+#endif
+
 	/* ... and get the mountpoint */
 	retval = kern_path(dir_name, LOOKUP_FOLLOW, &path);
 	if (retval)
